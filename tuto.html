@@ -1,0 +1,411 @@
+<meta charset="utf-8">
+<title>Extensions Chrome MPG</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Mise en page : une colonne de lecture ; chaque étape = texte + maquette de l'écran concerné, côte à côte en grand écran. */
+:root {
+  --bg: #f5f6fa;
+  --surface: #ffffff;
+  --ink: #161a2b;
+  --muted: #5b6178;
+  --line: #dfe2ec;
+  --accent: #3446b8;          /* bleu MPG */
+  --accent-soft: #e7eafb;
+  --mark: #e8890c;            /* « cliquez ici » sur les maquettes */
+  --mark-soft: rgba(232, 137, 12, .18);
+  --ok: #1f8a4c;
+  --mock-bg: #ffffff;
+  --mock-bar: #eceef4;
+  --mock-ink: #1d2233;
+  --mock-muted: #6b7186;
+  --mock-line: #dcdfe8;
+  --mock-field: #f3f4f8;
+  --folder: #4f8fe8;
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Figtree", -apple-system, "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  --f-ui: -apple-system, BlinkMacSystemFont, "Helvetica Neue", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1220; --surface: #171b2c; --ink: #e9ebf5; --muted: #9aa0b8; --line: #272c42;
+    --accent: #8e9cff; --accent-soft: #232a4d; --mark: #f5a524; --mark-soft: rgba(245, 165, 36, .2); --ok: #4cc683;
+    --mock-bg: #1e2234; --mock-bar: #282d43; --mock-ink: #e6e8f2; --mock-muted: #9aa0b8; --mock-line: #343a55; --mock-field: #252a40;
+    --folder: #5f9cf0; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1220; --surface: #171b2c; --ink: #e9ebf5; --muted: #9aa0b8; --line: #272c42;
+  --accent: #8e9cff; --accent-soft: #232a4d; --mark: #f5a524; --mark-soft: rgba(245, 165, 36, .2); --ok: #4cc683;
+  --mock-bg: #1e2234; --mock-bar: #282d43; --mock-ink: #e6e8f2; --mock-muted: #9aa0b8; --mock-line: #343a55; --mock-field: #252a40;
+  --folder: #5f9cf0; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 16px/1.6 var(--f-body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1040px; margin: 0 auto; padding-block: 48px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; letter-spacing: -.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(32px, 5vw, 46px); }
+h2 { font-size: 26px; }
+h3 { font-size: 19px; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, .path { font-family: var(--f-mono); font-size: .88em; background: var(--accent-soft); color: var(--ink); padding: 1px 6px; border-radius: 5px; white-space: nowrap; }
+kbd { font-family: var(--f-ui); font-size: .82em; font-weight: 600; padding: 1px 7px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 6px; background: var(--surface); white-space: nowrap; }
+.eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: var(--accent); }
+
+/* ---------- En-tête ---------- */
+header.intro { display: grid; gap: 14px; max-width: 680px; }
+header.intro .lead { font-size: 18px; color: var(--muted); }
+.needs { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 6px; font-size: 15px; color: var(--muted); }
+.needs span::before { content: "✓"; color: var(--ok); font-weight: 700; margin-right: 6px; }
+
+/* ---------- Les 5 extensions ---------- */
+.exts { margin-top: 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+.ext { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.ext b { font-size: 15px; }
+.ext span { font-size: 14px; color: var(--muted); line-height: 1.45; }
+
+/* ---------- Étapes ---------- */
+.part { margin-top: 64px; display: grid; gap: 8px; }
+.part > p { color: var(--muted); max-width: 640px; }
+ol.steps { list-style: none; margin: 28px 0 0; padding: 0; display: grid; gap: 22px; counter-reset: step; }
+.step { counter-increment: step; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 28px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 26px; }
+.step .txt { display: grid; gap: 10px; min-width: 0; }
+.step .txt h3::before { content: counter(step); display: inline-grid; place-items: center; width: 30px; height: 30px; margin-right: 10px; border-radius: 50%; background: var(--accent); color: var(--surface); font-size: 15px; vertical-align: 2px; }
+.step .txt p, .step .txt li { color: var(--muted); }
+.step .txt ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.note { font-size: 14px; border-left: 3px solid var(--mark); padding: 2px 0 2px 12px; color: var(--muted); }
+@media (max-width: 760px) { .step { grid-template-columns: minmax(0, 1fr); padding: 20px; gap: 20px; } }
+
+/* ---------- Boutons copier ---------- */
+.copy { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.copy button { font: 600 13px var(--f-body); color: var(--accent); background: transparent; border: 1px solid var(--line); border-radius: 7px; padding: 3px 10px; cursor: pointer; }
+.copy button:hover { border-color: var(--accent); }
+.copy button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Maquettes d'écran ---------- */
+.mock { font-family: var(--f-ui); font-size: 13px; color: var(--mock-ink); background: var(--mock-bg); border: 1px solid var(--mock-line); border-radius: 12px; box-shadow: 0 10px 30px rgba(20, 24, 50, .12); overflow: hidden; min-width: 0; }
+.bar { display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--mock-bar); border-bottom: 1px solid var(--mock-line); font-weight: 600; font-size: 12.5px; color: var(--mock-muted); }
+.dots { display: inline-flex; gap: 6px; margin-right: 6px; }
+.dots i { width: 11px; height: 11px; border-radius: 50%; background: #f25f58; }
+.dots i:nth-child(2) { background: #fbbe2e; } .dots i:nth-child(3) { background: #3ac83f; }
+.mbody { padding: 16px; display: grid; gap: 12px; }
+.mbtn { display: inline-flex; align-items: center; justify-content: center; padding: 6px 13px; border-radius: 7px; font-weight: 600; font-size: 12.5px; border: 1px solid var(--mock-line); background: var(--mock-field); color: var(--mock-ink); white-space: nowrap; }
+.mbtn.primary { background: #2f6fed; border-color: #2f6fed; color: #fff; }
+.hl { position: relative; box-shadow: 0 0 0 3px var(--mark), 0 0 0 8px var(--mark-soft); border-radius: 8px; }
+@media (prefers-reduced-motion: no-preference) {
+  .hl { animation: pulse 2.2s ease-in-out infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 3px var(--mark), 0 0 0 11px var(--mark-soft); } }
+}
+.row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.grow { flex: 1; min-width: 0; }
+.mmuted { color: var(--mock-muted); font-size: 12px; }
+
+/* raccourci */
+.sc-tile { width: 54px; height: 54px; border-radius: 13px; background: linear-gradient(140deg, #4a5ee8, #8a4fe0); display: grid; place-items: center; color: #fff; flex-shrink: 0; }
+.sc-tile svg { width: 26px; height: 26px; }
+/* réglages */
+.tabs { display: flex; gap: 4px; justify-content: center; }
+.tabs span { padding: 5px 12px; border-radius: 7px; color: var(--mock-muted); font-weight: 600; font-size: 12px; }
+.tabs span.on { background: var(--mock-field); color: var(--mock-ink); }
+.check { display: flex; align-items: center; gap: 9px; padding: 6px 8px; }
+.check i { width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--mock-muted); flex-shrink: 0; display: grid; place-items: center; }
+.check.on i { background: #2f6fed; border-color: #2f6fed; }
+.check.on i::after { content: ""; width: 8px; height: 4px; border: 2px solid #fff; border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+/* dialogue d'autorisation */
+.alert { text-align: center; display: grid; gap: 10px; justify-items: center; padding: 22px 18px 18px; }
+.alert .ico { width: 44px; height: 44px; border-radius: 11px; background: linear-gradient(140deg, #4a5ee8, #8a4fe0); }
+.alert b { font-size: 13.5px; }
+.alert .row { justify-content: center; }
+/* Finder */
+.finder { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 8px; padding: 18px 14px; }
+.fitem { display: grid; justify-items: center; gap: 4px; text-align: center; font-size: 11.5px; line-height: 1.25; min-width: 0; }
+.fitem svg { width: 46px; height: 38px; }
+.fitem.doc svg { width: 34px; height: 40px; }
+/* chrome://extensions */
+.cbar { display: flex; align-items: center; gap: 8px; padding: 7px 10px; background: var(--mock-bar); border-bottom: 1px solid var(--mock-line); }
+.omni { flex: 1; min-width: 0; background: var(--mock-bg); border-radius: 999px; padding: 4px 12px; font-size: 12px; color: var(--mock-ink); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.chead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--mock-line); flex-wrap: wrap; }
+.chead h4 { margin: 0; font-size: 15px; font-weight: 600; }
+.toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; padding: 4px 6px; }
+.sw { width: 30px; height: 16px; border-radius: 999px; background: var(--mock-line); position: relative; flex-shrink: 0; }
+.sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); }
+.sw.on { background: #2f6fed; } .sw.on::after { left: 16px; }
+.ctools { display: flex; gap: 8px; padding: 10px 14px; flex-wrap: wrap; border-bottom: 1px solid var(--mock-line); }
+.ctools .mbtn { background: transparent; color: #2f6fed; border-color: var(--mock-line); }
+.card { margin: 12px 14px 14px; border: 1px solid var(--mock-line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; }
+.card .row { flex-wrap: nowrap; }
+.card .ext-ico { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #5865f2, #8b5cf6); flex-shrink: 0; }
+/* dialogue d'ouverture */
+.sheet { margin: 0 14px; padding: 12px; border: 1px solid var(--mock-line); border-radius: 10px; background: var(--mock-field); display: grid; gap: 6px; }
+.field { background: var(--mock-bg); border: 1px solid #2f6fed; border-radius: 6px; padding: 5px 9px; font-family: var(--f-mono); font-size: 12px; }
+.list { margin: 0 14px; border: 1px solid var(--mock-line); border-radius: 8px; overflow: hidden; }
+.list div { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--mock-line); }
+.list div:last-child { border-bottom: 0; }
+.list div.sel { background: #2f6fed; color: #fff; }
+.list svg { width: 18px; height: 15px; flex-shrink: 0; }
+.mfoot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 14px 14px; flex-wrap: wrap; }
+/* barre d'outils Chrome / épingler */
+.pop { margin: 0 12px 12px auto; width: min(260px, 100%); border: 1px solid var(--mock-line); border-radius: 10px; box-shadow: 0 8px 22px rgba(20,24,50,.18); background: var(--mock-bg); padding: 6px; }
+.pop div { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; }
+.pop .mini { width: 18px; height: 18px; border-radius: 5px; flex-shrink: 0; }
+.pin { margin-left: auto; width: 22px; height: 22px; display: grid; place-items: center; color: var(--mock-muted); }
+.pin.on { color: #2f6fed; }
+.ticon { width: 26px; height: 26px; display: grid; place-items: center; color: var(--mock-muted); border-radius: 6px; flex-shrink: 0; }
+/* résultat du raccourci */
+.result { font-family: var(--f-mono); font-size: 12px; line-height: 1.6; white-space: pre-wrap; padding: 14px 16px; margin: 0; }
+
+/* ---------- Dépannage ---------- */
+.faq { margin-top: 28px; display: grid; gap: 10px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+summary { cursor: pointer; font-weight: 600; }
+details p { margin-top: 8px; color: var(--muted); }
+footer { margin-top: 56px; color: var(--muted); font-size: 14px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="folder" viewBox="0 0 46 38"><path d="M2 6a4 4 0 0 1 4-4h11l4 4h19a4 4 0 0 1 4 4v22a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill="var(--folder)"/><path d="M2 12h42v20a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z" fill="var(--folder)" opacity=".85"/></symbol>
+  <symbol id="doc" viewBox="0 0 34 40"><path d="M3 3h20l8 8v26H3z" fill="var(--mock-field)" stroke="var(--mock-muted)" stroke-width="1.5"/><path d="M9 18h16M9 23h16M9 28h11" stroke="var(--mock-muted)" stroke-width="1.5"/></symbol>
+  <symbol id="puzzle" viewBox="0 0 24 24"><path d="M10 3.5a2 2 0 0 1 4 0V5h4a1 1 0 0 1 1 1v4h-1.5a2 2 0 0 0 0 4H19v4a1 1 0 0 1-1 1h-4v-1.5a2 2 0 0 0-4 0V19H6a1 1 0 0 1-1-1v-4h1.5a2 2 0 0 0 0-4H5V6a1 1 0 0 1 1-1h4z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><path d="M9 3h6l-1 6 4 4H6l4-4zM12 13v8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></symbol>
+  <symbol id="pinned" viewBox="0 0 24 24"><path d="M9 3h6l-1 6 4 4H6l4-4z" fill="currentColor"/><path d="M12 13v8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="wrap">
+  <header class="intro">
+    <span class="eyebrow">Équipe MPG · Mac + Google Chrome</span>
+    <h1>Installer les extensions Chrome MPG</h1>
+    <p class="lead">Un raccourci macOS télécharge les extensions et les tient à jour. L’installation prend environ 5 minutes, une seule fois. Ensuite, une mise à jour = relancer le raccourci.</p>
+    <div class="needs"><span>Un Mac</span><span>Google Chrome</span><span>Le lien du raccourci « Extensions MPG » (envoyé par Frank)</span></div>
+  </header>
+
+  <section class="exts" aria-label="Les extensions">
+    <div class="ext"><b>MPG Tools</b><span>Ligues de test en un clic, mercatos automatiques, organisation de Mon MPG.</span></div>
+    <div class="ext"><b>API URL</b><span>Faire pointer MPG, MPP ou ligue1.com vers une autre API.</span></div>
+    <div class="ext"><b>Outils (custom user)</b><span>Voir le site comme un autre compte, version Bureau forcée.</span></div>
+    <div class="ext"><b>MPP Prono Selector</b><span>Cocher des pronos MPP et voir la somme des points.</span></div>
+    <div class="ext"><b>Bannière dynamique</b><span>Bandeaux animés, thème ardoise et correctifs d’affichage sur MPG.</span></div>
+  </section>
+
+  <!-- ======================= INSTALLATION ======================= -->
+  <section class="part" aria-labelledby="install">
+    <span class="eyebrow">Une seule fois</span>
+    <h2 id="install">Installation</h2>
+    <p>Installez seulement les extensions dont vous avez besoin : le raccourci les télécharge toutes, vous choisissez lesquelles charger dans Chrome à l’étape 5.</p>
+
+    <ol class="steps">
+      <li class="step">
+        <div class="txt">
+          <h3>Ajouter le raccourci</h3>
+          <p>Ouvrez le lien du raccourci « Extensions MPG » sur votre Mac. L’app Raccourcis s’ouvre : cliquez <b>Ajouter le raccourci</b>.</p>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="bar"><span class="dots"><i></i><i></i><i></i></span>Raccourcis</div>
+          <div class="mbody">
+            <div class="row">
+              <div class="sc-tile"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5M5 19h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <div class="grow"><b style="font-size:15px">Extensions MPG</b><div class="mmuted">Exécuter un script shell · Afficher le résultat</div></div>
+            </div>
+            <div class="row" style="justify-content:flex-end"><span class="mbtn">Ne pas ajouter</span><span class="mbtn primary hl">Ajouter le raccourci</span></div>
+          </div>
+        </div>
+      </li>
+
+      <li class="step">
+        <div class="txt">
+          <h3>Autoriser les scripts</h3>
+          <p>Le raccourci a besoin d’exécuter un petit script. Dans l’app Raccourcis :</p>
+          <ul>
+            <li>menu <b>Raccourcis › Réglages…</b> (ou <kbd>⌘</kbd> <kbd>,</kbd>)</li>
+            <li>onglet <b>Avancé</b></li>
+            <li>cochez <b>Autoriser l’exécution des scripts</b></li>
+          </ul>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="bar"><span class="dots"><i></i><i></i><i></i></span>Réglages</div>
+          <div class="mbody">
+            <div class="tabs"><span>Général</span><span class="on">Avancé</span></div>
+            <div>
+              <div class="check"><i></i>Autoriser le partage de grandes quantités de données</div>
+              <div class="check on hl"><i></i><b>Autoriser l’exécution des scripts</b></div>
+              <div class="check"><i></i>Autoriser la suppression sans confirmation</div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="step">
+        <div class="txt">
+          <h3>Lancer le raccourci</h3>
+          <p>Double-cliquez sur <b>Extensions MPG</b> dans l’app Raccourcis. La première fois, macOS demande si Raccourcis peut contrôler Google Chrome : cliquez <b>Autoriser</b> (ou <b>OK</b>).</p>
+          <p>Le raccourci crée le dossier <span class="path">Extensions MPG</span> dans votre dossier personnel, l’ouvre dans le Finder, et ouvre la page Extensions de Chrome.</p>
+          <p class="note">Ne déplacez pas et ne renommez pas ce dossier : Chrome charge les extensions directement depuis là.</p>
+        </div>
+        <div style="display:grid;gap:14px;min-width:0">
+          <div class="mock" aria-hidden="true">
+            <div class="alert">
+              <div class="ico"></div>
+              <b>« Raccourcis » souhaite contrôler « Google Chrome ».</b>
+              <span class="mmuted">L’autorisation permet d’ouvrir la page Extensions de Chrome.</span>
+              <div class="row"><span class="mbtn">Ne pas autoriser</span><span class="mbtn primary hl">Autoriser</span></div>
+            </div>
+          </div>
+          <div class="mock" aria-hidden="true">
+            <div class="bar"><span class="dots"><i></i><i></i><i></i></span>Extensions MPG</div>
+            <div class="finder">
+              <div class="fitem"><svg><use href="#folder"/></svg>MPG Tools</div>
+              <div class="fitem"><svg><use href="#folder"/></svg>API URL</div>
+              <div class="fitem"><svg><use href="#folder"/></svg>Outils (custom user)</div>
+              <div class="fitem"><svg><use href="#folder"/></svg>MPP Prono Selector</div>
+              <div class="fitem"><svg><use href="#folder"/></svg>Bannière dynamique</div>
+              <div class="fitem doc"><svg><use href="#doc"/></svg>LISEZMOI.txt</div>
+            </div>
+          </div>
+        </div>
+      </li>
+
+      <li class="step">
+        <div class="txt">
+          <h3>Activer le Mode développeur</h3>
+          <p>Sur la page Extensions de Chrome, activez <b>Mode développeur</b> en haut à droite.</p>
+          <p class="copy">Page pas ouverte ? Tapez <code id="u-ext">chrome://extensions</code> <button type="button" data-copy="chrome://extensions" id="copy-ext">Copier</button> dans la barre d’adresse.</p>
+          <p class="note">C’est le mode qui permet d’installer des extensions hors du Chrome Web Store. Laissez-le activé.</p>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="cbar"><span class="dots"><i></i><i></i><i></i></span><span class="omni">chrome://extensions</span></div>
+          <div class="chead"><h4>Extensions</h4><span class="toggle hl">Mode développeur <span class="sw on"></span></span></div>
+          <div class="ctools"><span class="mbtn">Charger l’extension non empaquetée</span><span class="mbtn">Empaqueter l’extension</span><span class="mbtn">Mettre à jour</span></div>
+          <div class="mbody mmuted">Vos extensions apparaîtront ici.</div>
+        </div>
+      </li>
+
+      <li class="step">
+        <div class="txt">
+          <h3>Charger chaque extension</h3>
+          <ul>
+            <li>Cliquez <b>Charger l’extension non empaquetée</b>.</li>
+            <li>Faites <kbd>⌘</kbd> <kbd>⇧</kbd> <kbd>G</kbd>, puis <kbd>⌘</kbd> <kbd>V</kbd> (le raccourci a copié le chemin du dossier) et <kbd>Entrée</kbd>.</li>
+            <li>Sélectionnez le dossier d’une extension, par exemple <b>MPG Tools</b>, puis <b>Sélectionner</b>.</li>
+          </ul>
+          <p>Recommencez pour chaque extension voulue. Chacune apparaît alors dans la page, avec son interrupteur activé.</p>
+          <p class="copy">Le chemin à coller : <code>~/Extensions MPG</code> <button type="button" data-copy="~/Extensions MPG" id="copy-path">Copier</button></p>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="ctools" style="border-bottom:1px solid var(--mock-line)"><span class="mbtn hl">Charger l’extension non empaquetée</span></div>
+          <div class="mbody" style="padding:14px 0 0;gap:10px">
+            <div class="sheet"><span class="mmuted">Aller au dossier :</span><div class="field">~/Extensions MPG</div></div>
+            <div class="list">
+              <div class="sel"><svg><use href="#folder"/></svg>MPG Tools</div>
+              <div><svg><use href="#folder"/></svg>API URL</div>
+              <div><svg><use href="#folder"/></svg>Outils (custom user)</div>
+            </div>
+          </div>
+          <div class="mfoot"><span class="mbtn">Annuler</span><span class="mbtn primary hl">Sélectionner</span></div>
+        </div>
+      </li>
+
+      <li class="step">
+        <div class="txt">
+          <h3>Épingler les extensions</h3>
+          <p>Cliquez l’icône <b>pièce de puzzle</b> à droite de la barre d’adresse, puis l’<b>épingle</b> à côté de chaque extension MPG : son icône reste visible dans la barre, à un clic.</p>
+          <p>Rechargez ensuite vos onglets MPG ouverts.</p>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="cbar"><span class="omni">mpg.football</span><span class="ticon hl"><svg width="18" height="18"><use href="#puzzle"/></svg></span></div>
+          <div style="padding-top:10px">
+            <div class="pop">
+              <div><span class="mini" style="background:linear-gradient(135deg,#5865f2,#8b5cf6)"></span>MPG – Tools<span class="pin on hl"><svg width="15" height="15"><use href="#pinned"/></svg></span></div>
+              <div><span class="mini" style="background:#e5484d"></span>API URL<span class="pin"><svg width="15" height="15"><use href="#pin"/></svg></span></div>
+              <div><span class="mini" style="background:#2fb36d"></span>Outils<span class="pin"><svg width="15" height="15"><use href="#pin"/></svg></span></div>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ======================= MISE À JOUR ======================= -->
+  <section class="part" aria-labelledby="update">
+    <span class="eyebrow">Quand Frank annonce une nouvelle version</span>
+    <h2 id="update">Mettre à jour</h2>
+    <ol class="steps" style="counter-reset: step">
+      <li class="step">
+        <div class="txt">
+          <h3>Relancer le raccourci</h3>
+          <p>Lancez <b>Extensions MPG</b>. Il indique ce qui a été mis à jour.</p>
+          <p>Les extensions déjà chargées se rechargent toutes seules dans Chrome, dans la minute. Rechargez ensuite vos onglets MPG.</p>
+          <p class="note">Rien d’autre à faire dans Chrome. Pour forcer tout de suite : bouton <b>Mettre à jour</b> sur la page <code>chrome://extensions</code>.</p>
+        </div>
+        <div class="mock" aria-hidden="true">
+          <div class="bar"><span class="dots"><i></i><i></i><i></i></span>Extensions MPG</div>
+<pre class="result">Mises à jour :
+  - API URL : 1.11.0 -> 1.12.0
+Chrome les recharge tout seul dans la minute.
+Rechargez ensuite vos onglets MPG.
+
+Déjà à jour :
+  - MPG Tools (1.13.0)
+  - Outils (custom user) (2.9.0)
+  - MPP Prono Selector (1.1.0)
+  - Bannière dynamique (1.6.0)</pre>
+          <div class="mfoot"><span class="mbtn primary">Terminé</span></div>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ======================= DÉPANNAGE ======================= -->
+  <section class="part" aria-labelledby="faq">
+    <h2 id="faq">En cas de souci</h2>
+    <div class="faq">
+      <details>
+        <summary>« L’exécution de scripts n’est pas autorisée »</summary>
+        <p>Refaites l’étape 2 : Raccourcis › Réglages › Avancé › Autoriser l’exécution des scripts.</p>
+      </details>
+      <details>
+        <summary>Chrome ne s’est pas ouvert sur la page Extensions</summary>
+        <p>Tapez <code>chrome://extensions</code> dans la barre d’adresse. Si vous avez cliqué « Ne pas autoriser » à l’étape 3, ce n’est pas grave : tout le reste est installé. Pour changer d’avis : Réglages Système › Confidentialité et sécurité › Automatisation.</p>
+      </details>
+      <details>
+        <summary>« Problèmes : téléchargement impossible »</summary>
+        <p>Vérifiez votre connexion internet et relancez le raccourci. Si le message reste, prévenez Frank : l’extension n’est peut-être pas encore publiée.</p>
+      </details>
+      <details>
+        <summary>Une extension affiche une erreur ou a disparu de Chrome</summary>
+        <p>Le dossier <code>Extensions MPG</code> a sans doute été déplacé, renommé ou supprimé. Relancez le raccourci, puis rechargez l’extension (étape 5) si elle n’est plus dans la liste.</p>
+      </details>
+      <details>
+        <summary>Chrome propose de désactiver les extensions en mode développeur</summary>
+        <p>Refusez (fermez le message) : sinon les extensions MPG sont désactivées.</p>
+      </details>
+      <details>
+        <summary>Les outils ne marchent pas sur une page déjà ouverte</summary>
+        <p>Rechargez la page (<kbd>⌘</kbd> <kbd>R</kbd>). Après une installation ou une mise à jour, les onglets ouverts avant gardent l’ancienne version.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>Une question ? Frank : frank@monpetitgazon.com</footer>
+</div>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach((btn) => {
+  btn.addEventListener('click', async () => {
+    const text = btn.dataset.copy;
+    try {
+      await navigator.clipboard.writeText(text);
+      btn.textContent = 'Copié';
+    } catch {
+      const code = btn.previousElementSibling;
+      const r = document.createRange(); r.selectNodeContents(code);
+      const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+      btn.textContent = 'Sélectionné : ⌘ C';
+    }
+    setTimeout(() => { btn.textContent = 'Copier'; }, 1800);
+  });
+});
+</script>

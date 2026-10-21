@@ -17,8 +17,8 @@
 #   MPG_EXT_REPORT=<fichier.html> (écrit le résumé HTML sans l'afficher)
 #
 # Résumé : une page HTML affichée dans une petite fenêtre native (JXA + WKWebView, 460 px de
-# large, hauteur ajustée au contenu, Échap pour fermer), à défaut dans le navigateur ; le texte
-# renvoyé au raccourci (« Afficher le résultat ») se réduit alors à une ligne.
+# large, hauteur ajustée au contenu, Échap pour fermer), à défaut dans le navigateur ; rien n'est
+# alors écrit sur stdout (le raccourci n'a plus besoin de l'action « Afficher le résultat »).
 set -u
 
 BASE="${MPG_EXT_BASE:-https://github.com/frank-mpg}"
@@ -408,7 +408,7 @@ if [ -n "$REPORT_ONLY" ]; then
   build_html > "$REPORT_ONLY"
   print_text
 elif [ -z "$NO_OPEN" ] && show_report; then
-  printf 'Extensions MPG : %s.\n' "$(summary_line)"
+  :   # résumé déjà affiché (fenêtre ou navigateur) : rien sur stdout, sinon le raccourci ouvre une 2e fenêtre « stdout »
 else
   print_text
 fi

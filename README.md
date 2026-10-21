@@ -6,7 +6,7 @@ Tuto d'installation : **https://frank-mpg.github.io/extension_installer/tuto.htm
 Lancé par le raccourci macOS **Extensions MPG** :
 
 ```
-curl -fsSL https://raw.githubusercontent.com/frank-mpg/extension_installer/main/install.sh | bash
+curl -fsSL "https://raw.githubusercontent.com/frank-mpg/extension_installer/main/install.sh?t=$(date +%s)" | bash
 ```
 
 | Dossier installé | Dépôt |

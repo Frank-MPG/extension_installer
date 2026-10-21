@@ -2,7 +2,7 @@
 # Installe ou met à jour les extensions Chrome MPG (Google Chrome et Arc).
 # Lancé par le raccourci macOS « Extensions MPG » :
 #
-#   curl -fsSL https://raw.githubusercontent.com/frank-mpg/extension_installer/main/install.sh | bash
+#   curl -fsSL "https://raw.githubusercontent.com/frank-mpg/extension_installer/main/install.sh?t=$(date +%s)" | bash
 #
 # Pour chaque extension : télécharge la dernière release GitHub (fichier extension.zip de
 # frank-mpg/extension_<nom>) et la place dans ~/Extensions MPG/<Nom lisible>/.
@@ -14,7 +14,8 @@
 #
 # Compatible avec le bash 3.2 de macOS. Variables pour les tests :
 #   MPG_EXT_BASE (défaut https://github.com/frank-mpg), MPG_EXT_DEST, MPG_EXT_NO_OPEN=1,
-#   MPG_EXT_REPORT=<fichier.html> (écrit le résumé HTML sans l'afficher)
+#   MPG_EXT_REPORT=<fichier.html> (écrit le résumé HTML sans l'afficher),
+#   MPG_EXT_DEBUG=1 (affiche l'erreur de la fenêtre de résumé ; journal : ~/Library/Caches/Extensions MPG/fenetre.log)
 #
 # Résumé : une page HTML affichée dans une petite fenêtre native (JXA + WKWebView, 460 px de
 # large, hauteur ajustée au contenu, Échap pour fermer), à défaut dans le navigateur ; rien n'est
@@ -25,6 +26,7 @@ BASE="${MPG_EXT_BASE:-https://github.com/frank-mpg}"
 DEST="${MPG_EXT_DEST:-$HOME/Extensions MPG}"
 NO_OPEN="${MPG_EXT_NO_OPEN:-}"
 REPORT_ONLY="${MPG_EXT_REPORT:-}"
+DEBUG="${MPG_EXT_DEBUG:-}"   # MPG_EXT_DEBUG=1 : affiche pourquoi la fenêtre de résumé ne s'ouvre pas
 
 # dossier du dépôt (frank-mpg/extension_<clé>) | nom du dossier installé | ancien nom du dossier
 # Renommer un dossier = l'extension change d'identité dans Chrome (nouvel ID, réglages remis à
@@ -235,8 +237,9 @@ summary_line() {
   printf '%s' "${parts# · }"
 }
 
-build_html() {
-  local title boxes="" where
+build_html() { # [native] : version pour la fenêtre (bouton Fermer, taille transmise)
+  local title boxes="" where cls=""
+  [ "${1:-}" = native ] && cls="native"
   if [ "$n_new" -gt 0 ]; then title="Extensions téléchargées"
   elif [ "$n_up" -gt 0 ]; then title="Extensions mises à jour"
   elif [ "$n_same" -gt 0 ]; then title="Tout est à jour"
@@ -263,7 +266,7 @@ build_html() {
 
   cat <<HTML
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><title>Extensions MPG</title>
+<html lang="fr" class="$cls"><head><meta charset="utf-8"><title>Extensions MPG</title>
 <style>
 :root{--bg:#f4f5f9;--card:#fff;--ink:#171b2c;--muted:#5d6379;--line:#e1e4ee;
 --new:#2f6fed;--up:#16a34a;--same:#9aa0b4;--err:#dc2626;--warn:#d97706;--accent:#3446b8;color-scheme:light}
@@ -307,13 +310,12 @@ $boxes
 <footer><span>Dossier <code>~/Extensions MPG</code>, à ne pas déplacer</span><button id="close" type="button">Fermer</button></footer>
 <script>
 (function () {
-  var h = window.webkit && webkit.messageHandlers && webkit.messageHandlers.mpg;
-  if (!h) return;                                   // ouvert dans un navigateur : pas de bouton
-  document.documentElement.className = 'native';
-  var post = function (m) { try { h.postMessage(m); } catch (e) {} };
-  var size = function () { post('h:' + Math.ceil(document.body.getBoundingClientRect().height)); };
-  document.getElementById('close').onclick = function () { post('close'); };
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' || e.key === 'Enter') post('close'); });
+  if (document.documentElement.className !== 'native') return;   // ouvert dans un navigateur
+  // La fenêtre native lit document.title : « mpg:h:<hauteur> » pour s'ajuster, « mpg:close » pour se fermer.
+  var size = function () { document.title = 'mpg:h:' + Math.ceil(document.body.getBoundingClientRect().height); };
+  var close = function () { document.title = 'mpg:close'; };
+  document.getElementById('close').onclick = close;
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' || e.key === 'Enter') close(); });
   if (document.readyState === 'complete') size(); else addEventListener('load', size);
 })();
 </script>
@@ -322,41 +324,22 @@ HTML
 }
 
 # Petite fenêtre native (JXA : NSWindow + WKWebView), 460 px de large, hauteur ajustée au contenu
-# (la page envoie sa hauteur), fermée par Échap / Entrée / ⌘W / bouton « Fermer » / croix.
+# (la page l'écrit dans son titre, lu en boucle : pas de WKScriptMessageHandler, protocole absent en JXA), fermée par Échap / Entrée / ⌘W / bouton « Fermer » / croix.
 # Bloque jusqu'à la fermeture (10 min max). Code de sortie ≠ 0 si la fenêtre n'a pas pu s'ouvrir.
-show_window() { # <fichier.html> <hauteur estimée>
-  osascript -l JavaScript - "$1" "$2" >/dev/null 2>&1 <<'JXA'
+show_window() { # <fichier.html> <hauteur estimée> <journal>
+  osascript -l JavaScript - "$1" "$2" >/dev/null 2>"$3" <<'JXA'
 ObjC.import('Cocoa');
 ObjC.import('WebKit');
 var win = null, W = 460;
 function run(argv) {
   var app = $.NSApplication.sharedApplication;
   app.setActivationPolicy(1);                                   // Accessory : pas d'icône dans le Dock
+  app.finishLaunching;
   var vis = $.NSScreen.mainScreen.visibleFrame;
   var maxH = vis.size.height - 80;
   var H = Math.min(parseInt(argv[1], 10) || 420, maxH);
 
-  ObjC.registerSubclass({
-    name: 'MPGSummaryHandler',
-    protocols: ['WKScriptMessageHandler'],
-    methods: {
-      'userContentController:didReceiveScriptMessage:': {
-        types: ['void', ['id', 'id']],
-        implementation: function (ucc, msg) {
-          var b = ObjC.unwrap(msg.body);
-          if (b === 'close') { win.close; return; }
-          if (typeof b === 'string' && b.indexOf('h:') === 0) {
-            var h = Math.min(Math.max(parseInt(b.slice(2), 10) || H, 160), maxH);
-            win.setContentSize($.NSMakeSize(W, h));
-            win.center;
-          }
-        }
-      }
-    }
-  });
-
   var cfg = $.WKWebViewConfiguration.alloc.init;
-  cfg.userContentController.addScriptMessageHandlerName($.MPGSummaryHandler.alloc.init, 'mpg');
   var rect = $.NSMakeRect(0, 0, W, H);
   var web = $.WKWebView.alloc.initWithFrameConfiguration(rect, cfg);
   try { web.setValueForKey(false, 'drawsBackground'); } catch (e) {}
@@ -374,9 +357,18 @@ function run(argv) {
   if (!win.isVisible) throw new Error('fenêtre non affichée');
 
   var mask = (typeof $.NSEventMaskAny === 'number') ? $.NSEventMaskAny : 0xffffffff;
-  var end = Date.now() + 10 * 60 * 1000;
+  var end = Date.now() + 10 * 60 * 1000, lastTitle = '';
   while (win.isVisible && Date.now() < end) {
     var ev = app.nextEventMatchingMaskUntilDateInModeDequeue(mask, $.NSDate.dateWithTimeIntervalSinceNow(0.25), $.NSDefaultRunLoopMode, true);
+    // Messages de la page via son titre (cf. build_html)
+    var t = ObjC.unwrap(web.title) || '';
+    if (t === 'mpg:close') { win.close; break; }
+    if (t.indexOf('mpg:h:') === 0 && t !== lastTitle) {
+      var h = Math.min(Math.max(parseInt(t.slice(6), 10) || H, 160), maxH);
+      win.setContentSize($.NSMakeSize(W, h));
+      win.center;
+    }
+    lastTitle = t;
     if (ev.isNil()) continue;
     if (ev.type === 10) {                                       // touche : Échap, ⌘W
       var k = ev.keyCode, cmd = (ev.modifierFlags & (1 << 20)) !== 0;
@@ -393,14 +385,20 @@ JXA
 show_report() {
   local dir="$HOME/Library/Caches/Extensions MPG" f h
   f="$dir/Extensions MPG.html"
-  mkdir -p "$dir" 2>/dev/null && build_html > "$f" 2>/dev/null || return 1
+  mkdir -p "$dir" 2>/dev/null && build_html > "$f" 2>/dev/null && build_html native > "$dir/fenetre.html" 2>/dev/null || return 1
   # Hauteur estimée (corrigée ensuite par la page elle-même)
   h=$((92 + (n_new + n_up + n_same) * 33 + n_err * 46))
   [ "$n_new" -gt 0 ] && h=$((h + 150))
   [ "$n_up" -gt 0 ] && h=$((h + 72))
   [ -n "${RENAMED_HTML:-}" ] && h=$((h + 100))
   [ "$n_err" -gt 0 ] && h=$((h + 64))
-  show_window "$f" "$h" && return 0
+  local code=0
+  show_window "$dir/fenetre.html" "$h" "$dir/fenetre.log" || code=$?
+  [ "$code" -eq 0 ] && return 0
+  if [ -n "$DEBUG" ]; then
+    printf 'Fenêtre de résumé impossible (code %s) :\n' "$code" >&2
+    cat "$dir/fenetre.log" >&2
+  fi
   open "$f" 2>/dev/null
 }
 

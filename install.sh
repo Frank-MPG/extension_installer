@@ -16,8 +16,9 @@
 #   MPG_EXT_BASE (défaut https://github.com/frank-mpg), MPG_EXT_DEST, MPG_EXT_NO_OPEN=1,
 #   MPG_EXT_REPORT=<fichier.html> (écrit le résumé HTML sans l'afficher)
 #
-# Résumé : une page HTML affichée dans une fenêtre Coup d'œil (qlmanage), à défaut dans le
-# navigateur ; le texte renvoyé au raccourci (« Afficher le résultat ») se réduit alors à une ligne.
+# Résumé : une page HTML affichée dans une petite fenêtre native (JXA + WKWebView, 460 px de
+# large, hauteur ajustée au contenu, Échap pour fermer), à défaut dans le navigateur ; le texte
+# renvoyé au raccourci (« Afficher le résultat ») se réduit alors à une ligne.
 set -u
 
 BASE="${MPG_EXT_BASE:-https://github.com/frank-mpg}"
@@ -266,56 +267,140 @@ build_html() {
 <style>
 :root{--bg:#f4f5f9;--card:#fff;--ink:#171b2c;--muted:#5d6379;--line:#e1e4ee;
 --new:#2f6fed;--up:#16a34a;--same:#9aa0b4;--err:#dc2626;--warn:#d97706;--accent:#3446b8;color-scheme:light}
-@media (prefers-color-scheme:dark){:root{--bg:#12141d;--card:#1b1e2b;--ink:#eceef6;--muted:#9aa0b8;--line:#2b2f42;
---new:#6b9bff;--up:#4ade80;--same:#6b7187;--err:#f87171;--warn:#fbbf24;--accent:#8e9cff;color-scheme:dark}}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1e27;--card:#262936;--ink:#eceef6;--muted:#9aa0b8;--line:#343849;
+--new:#6b9bff;--up:#4ade80;--same:#7a8098;--err:#f87171;--warn:#fbbf24;--accent:#8e9cff;color-scheme:dark}}
 *{box-sizing:border-box}
-body{margin:0;padding:28px 30px 30px;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
-header{display:flex;align-items:center;gap:14px;margin-bottom:18px}
-.logo{width:44px;height:44px;border-radius:11px;flex-shrink:0;background:linear-gradient(140deg,#4a5ee8,#8a4fe0);display:flex;align-items:center;justify-content:center;color:#fff;font:700 20px -apple-system,sans-serif}
-h1{font:700 21px/1.2 -apple-system,"SF Pro Display",sans-serif;margin:0;letter-spacing:-.01em}
-.sub{color:var(--muted);font-size:13px;margin-top:2px}
-ul.list{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
-ul.list li{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line)}
+html{background:var(--bg)}
+body{margin:0;padding:16px 18px 14px;background:var(--bg);color:var(--ink);font:13px/1.45 -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;-webkit-user-select:none;cursor:default}
+header{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.logo{width:32px;height:32px;border-radius:8px;flex-shrink:0;background:linear-gradient(140deg,#4a5ee8,#8a4fe0);display:flex;align-items:center;justify-content:center;color:#fff;font:700 15px -apple-system,sans-serif}
+h1{font:700 15px/1.25 -apple-system,sans-serif;margin:0}
+.sub{color:var(--muted);font-size:11.5px}
+ul.list{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+ul.list li{display:flex;align-items:center;gap:9px;padding:6px 11px;border-top:1px solid var(--line)}
 ul.list li:first-child{border-top:0}
-.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--same)}
-.t{flex:1;min-width:0;display:flex;flex-direction:column}
-.t b{font-weight:600}
-.t small{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
-.tag{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;color:var(--same);border:1px solid currentColor}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--same)}
+.t{flex:1;min-width:0;display:flex;align-items:baseline;gap:8px}
+.t b{font-weight:600;white-space:nowrap}
+.t small{color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;white-space:nowrap;color:var(--same);border:1px solid currentColor}
 li.new .dot{background:var(--new)} li.new .tag{color:var(--new)}
 li.up .dot{background:var(--up)} li.up .tag{color:var(--up)}
 li.err .dot{background:var(--err)} li.err .tag{color:var(--err)}
-li.same{opacity:.8}
-.box{margin-top:14px;padding:14px 16px;border-radius:12px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent)}
+li.err .t{flex-direction:column;gap:0} li.err .t small{white-space:normal}
+.box{margin-top:10px;padding:9px 12px;border-radius:10px;background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent)}
 .box.ok{border-left-color:var(--up)} .box.warn{border-left-color:var(--warn)} .box.err{border-left-color:var(--err)} .box.next{border-left-color:var(--new)}
-.box h2{font-size:14px;margin:0 0 6px}
-.box p{margin:6px 0 0;color:var(--muted)}
-.box ol,.box ul{margin:4px 0 0;padding-left:20px}
-.box li{margin:3px 0}
-kbd{font:600 11.5px -apple-system,sans-serif;padding:1px 6px;margin:0 1px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;background:var(--bg)}
-code{font:12px ui-monospace,Menlo,monospace;background:var(--bg);padding:1px 5px;border-radius:4px}
-footer{margin-top:16px;color:var(--muted);font-size:12px}
+.box h2{font-size:12.5px;margin:0 0 3px}
+.box p{margin:3px 0 0;color:var(--muted);font-size:12px}
+.box ol,.box ul{margin:2px 0 0;padding-left:18px;font-size:12px}
+.box li{margin:1px 0}
+kbd{font:600 10.5px -apple-system,sans-serif;padding:0 4px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;background:var(--bg)}
+code{font:11px ui-monospace,Menlo,monospace;background:var(--bg);padding:0 4px;border-radius:3px}
+footer{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;color:var(--muted);font-size:11px}
+#close{display:none;font:600 12px -apple-system,sans-serif;padding:4px 14px;border-radius:6px;border:0;background:var(--accent);color:#fff;cursor:pointer}
+.native #close{display:inline-block}
 </style></head>
 <body>
 <header><div class="logo">M</div><div><h1>$title</h1><div class="sub">$(html_esc "$(summary_line)") · $(date '+%d/%m à %H:%M')</div></div></header>
 <ul class="list">$ROWS</ul>
 $boxes
-<footer>Dossier : <code>~/Extensions MPG</code> · Ne pas le déplacer ni le renommer.</footer>
+<footer><span>Dossier <code>~/Extensions MPG</code>, à ne pas déplacer</span><button id="close" type="button">Fermer</button></footer>
+<script>
+(function () {
+  var h = window.webkit && webkit.messageHandlers && webkit.messageHandlers.mpg;
+  if (!h) return;                                   // ouvert dans un navigateur : pas de bouton
+  document.documentElement.className = 'native';
+  var post = function (m) { try { h.postMessage(m); } catch (e) {} };
+  var size = function () { post('h:' + Math.ceil(document.body.getBoundingClientRect().height)); };
+  document.getElementById('close').onclick = function () { post('close'); };
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' || e.key === 'Enter') post('close'); });
+  if (document.readyState === 'complete') size(); else addEventListener('load', size);
+})();
+</script>
 </body></html>
 HTML
 }
 
-# Affiche le résumé dans une fenêtre Coup d'œil ; à défaut, dans le navigateur par défaut.
+# Petite fenêtre native (JXA : NSWindow + WKWebView), 460 px de large, hauteur ajustée au contenu
+# (la page envoie sa hauteur), fermée par Échap / Entrée / ⌘W / bouton « Fermer » / croix.
+# Bloque jusqu'à la fermeture (10 min max). Code de sortie ≠ 0 si la fenêtre n'a pas pu s'ouvrir.
+show_window() { # <fichier.html> <hauteur estimée>
+  osascript -l JavaScript - "$1" "$2" >/dev/null 2>&1 <<'JXA'
+ObjC.import('Cocoa');
+ObjC.import('WebKit');
+var win = null, W = 460;
+function run(argv) {
+  var app = $.NSApplication.sharedApplication;
+  app.setActivationPolicy(1);                                   // Accessory : pas d'icône dans le Dock
+  var vis = $.NSScreen.mainScreen.visibleFrame;
+  var maxH = vis.size.height - 80;
+  var H = Math.min(parseInt(argv[1], 10) || 420, maxH);
+
+  ObjC.registerSubclass({
+    name: 'MPGSummaryHandler',
+    protocols: ['WKScriptMessageHandler'],
+    methods: {
+      'userContentController:didReceiveScriptMessage:': {
+        types: ['void', ['id', 'id']],
+        implementation: function (ucc, msg) {
+          var b = ObjC.unwrap(msg.body);
+          if (b === 'close') { win.close; return; }
+          if (typeof b === 'string' && b.indexOf('h:') === 0) {
+            var h = Math.min(Math.max(parseInt(b.slice(2), 10) || H, 160), maxH);
+            win.setContentSize($.NSMakeSize(W, h));
+            win.center;
+          }
+        }
+      }
+    }
+  });
+
+  var cfg = $.WKWebViewConfiguration.alloc.init;
+  cfg.userContentController.addScriptMessageHandlerName($.MPGSummaryHandler.alloc.init, 'mpg');
+  var rect = $.NSMakeRect(0, 0, W, H);
+  var web = $.WKWebView.alloc.initWithFrameConfiguration(rect, cfg);
+  try { web.setValueForKey(false, 'drawsBackground'); } catch (e) {}
+  var url = $.NSURL.fileURLWithPath(argv[0]);
+  web.loadFileURLAllowingReadAccessToURL(url, url.URLByDeletingLastPathComponent);
+
+  win = $.NSWindow.alloc.initWithContentRectStyleMaskBackingDefer(rect, 1 | 2, 2, false); // titrée + fermable
+  win.title = 'Extensions MPG';
+  win.releasedWhenClosed = false;
+  win.contentView = web;
+  win.level = 3;                                                // au-dessus des autres fenêtres
+  win.center;
+  win.makeKeyAndOrderFront(null);
+  app.activateIgnoringOtherApps(true);
+  if (!win.isVisible) throw new Error('fenêtre non affichée');
+
+  var mask = (typeof $.NSEventMaskAny === 'number') ? $.NSEventMaskAny : 0xffffffff;
+  var end = Date.now() + 10 * 60 * 1000;
+  while (win.isVisible && Date.now() < end) {
+    var ev = app.nextEventMatchingMaskUntilDateInModeDequeue(mask, $.NSDate.dateWithTimeIntervalSinceNow(0.25), $.NSDefaultRunLoopMode, true);
+    if (ev.isNil()) continue;
+    if (ev.type === 10) {                                       // touche : Échap, ⌘W
+      var k = ev.keyCode, cmd = (ev.modifierFlags & (1 << 20)) !== 0;
+      if (k === 53 || (cmd && k === 13)) { win.close; continue; }
+    }
+    app.sendEvent(ev);
+  }
+  if (win.isVisible) win.close;
+}
+JXA
+}
+
+# Affiche le résumé : fenêtre native, à défaut navigateur par défaut.
 show_report() {
-  local dir="$HOME/Library/Caches/Extensions MPG" f
+  local dir="$HOME/Library/Caches/Extensions MPG" f h
   f="$dir/Extensions MPG.html"
   mkdir -p "$dir" 2>/dev/null && build_html > "$f" 2>/dev/null || return 1
-  if command -v qlmanage >/dev/null 2>&1; then
-    pkill -x qlmanage >/dev/null 2>&1
-    ( qlmanage -p "$f" >/dev/null 2>&1 & )
-    sleep 1
-    pgrep -x qlmanage >/dev/null 2>&1 && return 0
-  fi
+  # Hauteur estimée (corrigée ensuite par la page elle-même)
+  h=$((92 + (n_new + n_up + n_same) * 33 + n_err * 46))
+  [ "$n_new" -gt 0 ] && h=$((h + 150))
+  [ "$n_up" -gt 0 ] && h=$((h + 72))
+  [ -n "${RENAMED_HTML:-}" ] && h=$((h + 100))
+  [ "$n_err" -gt 0 ] && h=$((h + 64))
+  show_window "$f" "$h" && return 0
   open "$f" 2>/dev/null
 }
 

@@ -34,6 +34,7 @@ DEBUG="${MPG_EXT_DEBUG:-}"   # MPG_EXT_DEBUG=1 : affiche pourquoi la fenêtre de
 EXTS="auto_leagues|Ligues de test|MPG Tools
 api_url|Changer d'API|API URL
 custom_user|Custom user|Outils (custom user)
+kelio|Kelio repensé|
 mpp_points_calculator|Calcul des points pronos|MPP Prono Selector
 ui_improvements|Thème et correctifs UI|Bannière dynamique"
 

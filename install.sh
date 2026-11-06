@@ -22,6 +22,21 @@
 # alors écrit sur stdout (le raccourci n'a plus besoin de l'action « Afficher le résultat »).
 set -u
 
+# Toujours la dernière version de ce script : raw.githubusercontent.com peut servir une copie en cache
+# (jusqu'à ~5 min après un push, même avec ?t=…). On relit donc install.sh via l'API GitHub (pas de cache
+# CDN) et on l'exécute à la place ; en cas d'échec (hors ligne, quota API), on continue avec cette copie.
+if [ -z "${MPG_EXT_FRESH:-}" ] && [ -z "${MPG_EXT_BASE:-}" ]; then
+  _fresh="$(mktemp "${TMPDIR:-/tmp}/mpg-install.XXXXXX" 2>/dev/null)" || _fresh=""
+  if [ -n "$_fresh" ] && curl -fsL --connect-timeout 8 -H 'Accept: application/vnd.github.raw' \
+      "https://api.github.com/repos/frank-mpg/extension_installer/contents/install.sh?ref=main" -o "$_fresh" \
+      && head -n 1 "$_fresh" | grep -q '^#!/bin/bash'; then
+    MPG_EXT_FRESH=1 exec bash "$_fresh"
+  fi
+  rm -f "$_fresh" 2>/dev/null
+elif [ -n "${MPG_EXT_FRESH:-}" ]; then
+  case "$0" in *mpg-install*) rm -f "$0" ;; esac   # copie fraîche temporaire : déjà lue par bash
+fi
+
 BASE="${MPG_EXT_BASE:-https://github.com/frank-mpg}"
 DEST="${MPG_EXT_DEST:-$HOME/Extensions MPG}"
 NO_OPEN="${MPG_EXT_NO_OPEN:-}"

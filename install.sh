@@ -51,6 +51,7 @@ api_url|Changer d'API|API URL
 custom_user|Custom user|Outils (custom user)
 kelio|Kelio repensé|
 mpp_points_calculator|Calcul des points pronos|MPP Prono Selector
+outlook_zoom|Zoom Outlook|
 ui_improvements|Thème et correctifs UI|Bannière dynamique"
 
 TMP="$(mktemp -d)"
